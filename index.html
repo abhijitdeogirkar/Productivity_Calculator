@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>पीक कापणी प्रयोग - उत्पादकता कॅल्क्युलेटर</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4b7a2f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="पीक कॅल्क्युलेटर">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+
+<style>
+:root{
+  --bg:#f6f4ee; --card:#ffffff; --text:#22301a; --muted:#5f6b57;
+  --accent:#4b7a2f; --accent-dark:#375c20; --border:#dcd6c4;
+  --input-bg:#fbfaf5; --danger:#a1442e;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171b13; --card:#212619; --text:#eef0e6; --muted:#a7b199;
+    --accent:#8fc25a; --accent-dark:#6fa03f; --border:#3a4130; --input-bg:#262c1c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171b13; --card:#212619; --text:#eef0e6; --muted:#a7b199;
+  --accent:#8fc25a; --accent-dark:#6fa03f; --border:#3a4130; --input-bg:#262c1c;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Noto Sans','Noto Sans Devanagari',system-ui,sans-serif;
+  min-height:100%;
+  padding:20px 14px 40px;
+}
+.wrap{max-width:640px;margin:0 auto;}
+h1{font-size:1.3rem;margin:4px 0 2px;color:var(--accent-dark);}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:16px; margin-bottom:14px;
+}
+label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px;}
+input, select{
+  width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--input-bg); color:var(--text); font-size:1rem;
+}
+.row{display:flex; gap:10px;}
+.row > div{flex:1;}
+.toggle{display:flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:6px;}
+.toggle button{
+  flex:1; padding:10px; border:none; background:var(--input-bg); color:var(--text);
+  font-size:.85rem; cursor:pointer;
+}
+.toggle button.active{background:var(--accent); color:#fff; font-weight:600;}
+.toggle button:disabled{opacity:.5; cursor:not-allowed;}
+input[readonly]{background:var(--border); color:var(--muted); cursor:not-allowed;}
+.result{
+  background:var(--accent); color:#fff; border-radius:12px; padding:16px; text-align:center;
+}
+.result .big{font-size:1.6rem; font-weight:700;}
+.result .lines{margin-top:6px; font-size:.9rem; opacity:.95;}
+details{margin-top:8px;}
+summary{cursor:pointer; color:var(--accent-dark); font-size:.88rem; padding:4px 0;}
+.err{color:var(--danger); font-size:.85rem; margin-top:8px;}
+.note{font-size:.78rem; color:var(--muted); margin-top:10px; line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌾 पीक कापणी प्रयोग — उत्पादकता कॅल्क्युलेटर</h1>
+  <div class="sub">प्लॉट वजन ⇄ हेक्टरी उत्पादन असे दोन्ही दिशेने गणित</div>
+
+  <div class="card">
+    <div class="toggle">
+      <button id="modeW2Y" class="active" onclick="setMode('w2y')">वजन → हेक्टरी उत्पादन</button>
+      <button id="modeY2W" onclick="setMode('y2w')">हेक्टरी उत्पादन → वजन</button>
+    </div>
+
+    <label>पीक निवडा</label>
+    <select id="cropSelect" onchange="onCropChange()"></select>
+    <div id="customCropBox" style="display:none">
+      <label>पिकाचे नाव लिहा</label>
+      <input id="customCrop" type="text" placeholder="उदा. करडई, तीळ">
+    </div>
+    <div class="note" id="cropSizeNote" style="margin-top:8px;"></div>
+
+    <label>प्लॉट क्षेत्रफळ कसे टाकायचे?</label>
+    <div class="toggle">
+      <button id="areaDirect" class="active" onclick="setAreaMode('direct')">थेट चौ.मी.</button>
+      <button id="areaLW" onclick="setAreaMode('lw')">लांबी × रुंदी</button>
+    </div>
+
+    <div id="areaDirectBox">
+      <label>प्लॉट क्षेत्रफळ (चौरस मीटर)</label>
+      <input id="areaSqm" type="number" min="0" step="any" placeholder="उदा. 25">
+    </div>
+    <div id="areaLWBox" style="display:none">
+      <div class="row">
+        <div>
+          <label>लांबी (मीटर)</label>
+          <input id="lenM" type="number" min="0" step="any" placeholder="उदा. 5">
+        </div>
+        <div>
+          <label>रुंदी (मीटर)</label>
+          <input id="widM" type="number" min="0" step="any" placeholder="उदा. 5">
+        </div>
+      </div>
+    </div>
+
+    <div id="inputW">
+      <label>प्लॉट मधील धान्य वजन (किलो)</label>
+      <input id="plotWeight" type="number" min="0" step="any" placeholder="उदा. 6.5">
+    </div>
+    <div id="inputY" style="display:none">
+      <label>हेक्टरी उत्पादन</label>
+      <div class="row">
+        <div><input id="yieldVal" type="number" min="0" step="any" placeholder="उदा. 2600"></div>
+        <div>
+          <select id="yieldUnit">
+            <option value="kg">किलो/हेक्टर</option>
+            <option value="q">क्विंटल/हेक्टर</option>
+            <option value="t">टन/हेक्टर</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>ओलावा दुरुस्ती (Moisture Correction) — ऐच्छिक</summary>
+      <div class="row">
+        <div>
+          <label>सध्याचा ओलावा %</label>
+          <input id="curMoist" type="number" min="0" max="99" step="any" placeholder="उदा. 18">
+        </div>
+        <div>
+          <label>प्रमाणित ओलावा %</label>
+          <input id="stdMoist" type="number" min="0" max="99" step="any" placeholder="उदा. 14">
+        </div>
+      </div>
+    </details>
+
+    <div id="errBox" class="err" style="display:none"></div>
+  </div>
+
+  <div class="card result" id="resultCard" style="display:none">
+    <div class="big" id="resBig">—</div>
+    <div class="lines" id="resLines"></div>
+  </div>
+
+  <div class="note">
+    सूत्र: हेक्टरी उत्पादन (किलो/हे.) = (प्लॉट वजन ÷ प्लॉट क्षेत्रफळ चौ.मी.) × 10,000.
+    ओलावा दुरुस्ती वापरल्यास वजन आधी समायोजित केले जाते, मग वरील सूत्र लागू होते.
+  </div>
+</div>
+
+<script>
+let mode = 'w2y';
+let areaMode = 'direct';
+
+// पीक कापणी प्रयोगासाठी अधिकृत प्लॉट मोजमापे (मीटर मध्ये लांबी x रुंदी) - दिलेल्या तक्त्यानुसार कन्फर्म केलेला डेटा
+const CROPS = [
+  { name: "खरीप ज्वारी", l: 10, w: 10 },
+  { name: "भुईमूग (खरीप)", l: 10, w: 10 },
+  { name: "तीळ", l: 10, w: 10 },
+  { name: "मका", l: 10, w: 10 },
+  { name: "भात", l: 10, w: 10 },
+  { name: "रब्बी ज्वारी", l: 10, w: 10 },
+  { name: "गहू", l: 10, w: 10 },
+  { name: "हरभरा", l: 10, w: 10 },
+  { name: "करडई", l: 10, w: 10 },
+  { name: "उन्हाळी सूर्यफूल", l: 10, w: 10 },
+  { name: "उन्हाळी भुईमूग", l: 10, w: 10 },
+  { name: "कापूस", l: 20, w: 10 },
+  { name: "तूर", l: 20, w: 10 },
+  { name: "मूग", l: 10, w: 5 },
+  { name: "उडीद", l: 10, w: 5 },
+  { name: "सोयाबीन", l: 10, w: 5 },
+  { name: "ऊस", l: 5, w: 5 },
+  { name: "इतर / कस्टम", l: null, w: null },
+];
+
+function populateCropDropdown(){
+  const sel = document.getElementById('cropSelect');
+  sel.innerHTML = '';
+  CROPS.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+}
+
+function onCropChange(){
+  const idx = parseInt(document.getElementById('cropSelect').value);
+  const crop = CROPS[idx];
+  const customBox = document.getElementById('customCropBox');
+  const note = document.getElementById('cropSizeNote');
+  const lenEl = document.getElementById('lenM');
+  const widEl = document.getElementById('widM');
+  const areaEl = document.getElementById('areaSqm');
+  const btnDirect = document.getElementById('areaDirect');
+  const btnLW = document.getElementById('areaLW');
+
+  if(crop.l === null){
+    customBox.style.display = 'block';
+    note.textContent = 'कृपया या पिकासाठी योग्य प्लॉट क्षेत्रफळ खाली स्वतः टाका.';
+    lenEl.readOnly = false; widEl.readOnly = false; areaEl.readOnly = false;
+    btnDirect.disabled = false; btnLW.disabled = false;
+    // मापे कोरी ठेवा - आधीच्या पिकाची भरलेली मापे पुसून टाका
+    lenEl.value = ''; widEl.value = ''; areaEl.value = '';
+    document.getElementById('resultCard').style.display = 'none';
+    return;
+  }
+  customBox.style.display = 'none';
+
+  // standard crop: lock the plot size, no accidental edits allowed
+  setAreaMode('lw');
+  lenEl.value = crop.l;
+  widEl.value = crop.w;
+  lenEl.readOnly = true; widEl.readOnly = true;
+  areaEl.readOnly = true;
+  btnDirect.disabled = true; btnLW.disabled = true;
+  note.textContent = `अधिकृत प्लॉट साइझ (निश्चित): ${crop.l} मी × ${crop.w} मी (${crop.l*crop.w} चौ.मी.)`;
+  calc();
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById('modeW2Y').classList.toggle('active', m==='w2y');
+  document.getElementById('modeY2W').classList.toggle('active', m==='y2w');
+  document.getElementById('inputW').style.display = (m==='w2y') ? 'block' : 'none';
+  document.getElementById('inputY').style.display = (m==='y2w') ? 'block' : 'none';
+  calc();
+}
+function setAreaMode(m){
+  areaMode = m;
+  document.getElementById('areaDirect').classList.toggle('active', m==='direct');
+  document.getElementById('areaLW').classList.toggle('active', m==='lw');
+  document.getElementById('areaDirectBox').style.display = (m==='direct') ? 'block' : 'none';
+  document.getElementById('areaLWBox').style.display = (m==='lw') ? 'block' : 'none';
+  calc();
+}
+function getArea(){
+  if(areaMode==='direct'){
+    return parseFloat(document.getElementById('areaSqm').value);
+  } else {
+    const l = parseFloat(document.getElementById('lenM').value);
+    const w = parseFloat(document.getElementById('widM').value);
+    return (isFinite(l) && isFinite(w)) ? l*w : NaN;
+  }
+}
+function toKgPerHa(val, unit){
+  if(unit==='kg') return val;
+  if(unit==='q') return val*100;
+  if(unit==='t') return val*1000;
+  return val;
+}
+function moistureAdjust(weight){
+  const cur = parseFloat(document.getElementById('curMoist').value);
+  const std = parseFloat(document.getElementById('stdMoist').value);
+  if(isFinite(cur) && isFinite(std) && std < 100){
+    return weight * (100-cur) / (100-std);
+  }
+  return weight;
+}
+function fmt(n, d=2){
+  if(!isFinite(n)) return '—';
+  return n.toLocaleString('en-IN', {maximumFractionDigits:d, minimumFractionDigits:0});
+}
+function calc(){
+  const errBox = document.getElementById('errBox');
+  const resultCard = document.getElementById('resultCard');
+  errBox.style.display='none';
+  const area = getArea();
+
+  if(!isFinite(area) || area<=0){
+    resultCard.style.display='none';
+    return;
+  }
+
+  if(mode==='w2y'){
+    let w = parseFloat(document.getElementById('plotWeight').value);
+    if(!isFinite(w) || w<0){ resultCard.style.display='none'; return; }
+    w = moistureAdjust(w);
+    const kgHa = (w/area)*10000;
+    document.getElementById('resBig').textContent = fmt(kgHa,1) + ' किलो/हेक्टर';
+    document.getElementById('resLines').innerHTML =
+      (kgHa/100).toLocaleString('en-IN',{maximumFractionDigits:2}) + ' क्विंटल/हेक्टर &nbsp;|&nbsp; ' +
+      (kgHa/1000).toLocaleString('en-IN',{maximumFractionDigits:3}) + ' टन/हेक्टर';
+    resultCard.style.display='block';
+  } else {
+    let y = parseFloat(document.getElementById('yieldVal').value);
+    const unit = document.getElementById('yieldUnit').value;
+    if(!isFinite(y) || y<0){ resultCard.style.display='none'; return; }
+    const kgHa = toKgPerHa(y, unit);
+    const plotW = (kgHa*area)/10000;
+    document.getElementById('resBig').textContent = fmt(plotW,3) + ' किलो (प्लॉट वजन)';
+    document.getElementById('resLines').innerHTML =
+      'प्लॉट क्षेत्रफळ: ' + fmt(area,2) + ' चौ.मी. साठी अपेक्षित वजन';
+    resultCard.style.display='block';
+  }
+}
+
+['areaSqm','lenM','widM','plotWeight','yieldVal','yieldUnit','curMoist','stdMoist']
+  .forEach(id => document.getElementById(id).addEventListener('input', calc));
+
+populateCropDropdown();
+onCropChange();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>

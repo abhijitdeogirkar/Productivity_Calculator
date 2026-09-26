@@ -1,0 +1,16 @@
+{
+  "name": "पीक कापणी प्रयोग कॅल्क्युलेटर",
+  "short_name": "पीक कॅल्क्युलेटर",
+  "description": "प्लॉट वजन व हेक्टरी उत्पादन दोन्ही दिशेने काढणारे कॅल्क्युलेटर",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#4b7a2f",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
