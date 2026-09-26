@@ -1,38 +1,437 @@
-const CACHE_NAME = 'cce-calc-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>पीक कापणी प्रयोग - उत्पादकता कॅल्क्युलेटर</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4b7a2f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="पीक कॅल्क्युलेटर">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+
+<style>
+:root{
+  --bg:#eef1e9; --card:#ffffff; --text:#1e2a19; --muted:#5c6656;
+  --accent:#2f6b3e; --accent-dark:#1f4c2c; --accent-light:#e7f0e2; --border:#d7dccb;
+  --input-bg:#fcfcfa; --danger:#a1442e; --gold:#b8860b;
+  --shadow: 0 1px 2px rgba(30,42,25,.04), 0 4px 14px rgba(30,42,25,.06);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160f; --card:#1b2016; --text:#e9ede2; --muted:#9aa68d;
+    --accent:#6fae7c; --accent-dark:#4d8a5b; --accent-light:#20291b; --border:#333c2a; --input-bg:#20261a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160f; --card:#1b2016; --text:#e9ede2; --muted:#9aa68d;
+  --accent:#6fae7c; --accent-dark:#4d8a5b; --accent-light:#20291b; --border:#333c2a; --input-bg:#20261a;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.35);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Noto Sans','Noto Sans Devanagari',system-ui,sans-serif;
+  min-height:100%;
+  padding:0 0 40px;
+}
+.wrap{max-width:640px;margin:0 auto; padding:0 14px;}
+.header{
+  background:linear-gradient(135deg, var(--accent-dark), var(--accent));
+  color:#fff;
+  padding:calc(22px + env(safe-area-inset-top,0px)) 18px 20px;
+  margin-bottom:18px;
+  border-radius:0 0 18px 18px;
+  box-shadow:var(--shadow);
+}
+.header-top{display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;}
+.header-icon{
+  width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.16);
+  display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex:none;
+}
+h1{font-size:1.15rem; margin:0; font-weight:700; letter-spacing:.1px; line-height:1.35;}
+.sub{color:rgba(255,255,255,.85); font-size:.85rem; margin-top:3px;}
+.credit{
+  color:rgba(255,255,255,.75); font-size:.7rem; margin-top:10px; letter-spacing:.2px;
+  border-top:1px solid rgba(255,255,255,.2); padding-top:8px; text-align:center;
+}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:18px; margin-bottom:14px; box-shadow:var(--shadow);
+}
+.card-title{
+  font-size:.78rem; font-weight:700; color:var(--accent-dark); text-transform:uppercase;
+  letter-spacing:.6px; margin-bottom:12px; display:flex; align-items:center; gap:6px;
+}
+.card-title::before{
+  content:""; width:4px; height:14px; background:var(--accent); border-radius:2px; display:inline-block;
+}
+label{display:block;font-size:.83rem;color:var(--muted);margin:10px 0 5px; font-weight:500;}
+input, select{
+  width:100%; padding:11px 12px; border-radius:9px; border:1px solid var(--border);
+  background:var(--input-bg); color:var(--text); font-size:1rem;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, select:focus{
+  outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-light);
+}
+.row{display:flex; gap:10px;}
+.row > div{flex:1;}
+.toggle{display:flex; border:1px solid var(--border); border-radius:11px; overflow:hidden; margin-bottom:6px; background:var(--input-bg);}
+.toggle button{
+  flex:1; padding:11px 6px; border:none; background:transparent; color:var(--text);
+  font-size:.83rem; font-weight:500; cursor:pointer; transition:background .15s ease, color .15s ease;
+}
+.toggle button.active{background:var(--accent); color:#fff; font-weight:700;}
+.toggle button:disabled{opacity:.45; cursor:not-allowed;}
+input[readonly]{background:var(--border); color:var(--muted); cursor:not-allowed;}
+.result{
+  background:linear-gradient(135deg, var(--accent-dark), var(--accent));
+  color:#fff; border-radius:16px; padding:20px; text-align:center; box-shadow:var(--shadow);
+}
+.result-label{font-size:.72rem; text-transform:uppercase; letter-spacing:.8px; opacity:.85; margin-bottom:4px;}
+.result .big{font-size:1.7rem; font-weight:800; letter-spacing:.2px;}
+.result .lines{margin-top:8px; font-size:.88rem; opacity:.92;}
+details{margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;}
+summary{cursor:pointer; color:var(--accent-dark); font-size:.85rem; padding:4px 0; font-weight:600; list-style:none;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:"▸ "; color:var(--accent);}
+details[open] summary::before{content:"▾ ";}
+.err{color:var(--danger); font-size:.85rem; margin-top:8px;}
+.note{
+  font-size:.76rem; color:var(--muted); margin-top:4px; line-height:1.5;
+  background:var(--accent-light); border-radius:10px; padding:10px 12px;
+}
+.disclaimer{
+  font-size:.72rem; color:var(--muted); margin-top:20px; line-height:1.6;
+  border-top:1px solid var(--border); padding-top:14px; text-align:center;
+}
+.disclaimer b{color:var(--accent-dark);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="wrap" style="padding:0;">
+    <div class="header-top">
+      <div class="header-icon">🌾</div>
+      <div>
+        <h1>पीक कापणी प्रयोग — उत्पादकता कॅल्क्युलेटर</h1>
+        <div class="sub">प्लॉट वजन ⇄ हेक्टरी उत्पादन असे दोन्ही दिशेने गणित</div>
+      </div>
+    </div>
+    <div class="credit">विकसक: अभिजीत वि. देवगिरकर, कृषी विकास अधिकारी, वाशिम</div>
+  </div>
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <div class="card-title">माहिती भरा</div>
+    <div class="toggle">
+      <button id="modeW2Y" class="active" onclick="setMode('w2y')">वजन → हेक्टरी उत्पादन</button>
+      <button id="modeY2W" onclick="setMode('y2w')">हेक्टरी उत्पादन → वजन</button>
+    </div>
+
+    <label>पीक निवडा</label>
+    <select id="cropSelect" onchange="onCropChange()"></select>
+    <div id="customCropBox" style="display:none">
+      <label>पिकाचे नाव लिहा</label>
+      <input id="customCrop" type="text" placeholder="उदा. करडई, तीळ">
+    </div>
+    <div class="note" id="cropSizeNote" style="margin-top:8px;"></div>
+
+    <label>प्लॉट क्षेत्रफळ कसे टाकायचे?</label>
+    <div class="toggle">
+      <button id="areaDirect" class="active" onclick="setAreaMode('direct')">थेट चौ.मी.</button>
+      <button id="areaLW" onclick="setAreaMode('lw')">लांबी × रुंदी</button>
+    </div>
+
+    <div id="areaDirectBox">
+      <label>प्लॉट क्षेत्रफळ (चौरस मीटर)</label>
+      <input id="areaSqm" type="number" min="0" step="any" placeholder="उदा. 25">
+    </div>
+    <div id="areaLWBox" style="display:none">
+      <div class="row">
+        <div>
+          <label>लांबी (मीटर)</label>
+          <input id="lenM" type="number" min="0" step="any" placeholder="उदा. 5">
+        </div>
+        <div>
+          <label>रुंदी (मीटर)</label>
+          <input id="widM" type="number" min="0" step="any" placeholder="उदा. 5">
+        </div>
+      </div>
+    </div>
+
+    <div id="inputW">
+      <label>प्लॉट मधील धान्य वजन (किलो)</label>
+      <input id="plotWeight" type="number" min="0" step="any" placeholder="उदा. 6.5">
+    </div>
+    <div id="inputY" style="display:none">
+      <label>हेक्टरी उत्पादन</label>
+      <div class="row">
+        <div><input id="yieldVal" type="number" min="0" step="any" placeholder="उदा. 2600"></div>
+        <div>
+          <select id="yieldUnit">
+            <option value="kg">किलो/हेक्टर</option>
+            <option value="q">क्विंटल/हेक्टर</option>
+            <option value="t">टन/हेक्टर</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <details>
+      <summary>ओलावा दुरुस्ती (Moisture Correction) — ऐच्छिक</summary>
+      <div class="row">
+        <div>
+          <label>सध्याचा ओलावा %</label>
+          <input id="curMoist" type="number" min="0" max="99" step="any" placeholder="उदा. 18">
+        </div>
+        <div>
+          <label>प्रमाणित ओलावा %</label>
+          <input id="stdMoist" type="number" min="0" max="99" step="any" placeholder="उदा. 14">
+        </div>
+      </div>
+    </details>
+
+    <div id="errBox" class="err" style="display:none"></div>
+  </div>
+
+  <div class="card result" id="resultCard" style="display:none">
+    <div class="result-label">परिणाम</div>
+    <div class="big" id="resBig">—</div>
+    <div class="lines" id="resLines"></div>
+  </div>
+
+  <div class="note">
+    सूत्र: हेक्टरी उत्पादन (किलो/हे.) = (प्लॉट वजन ÷ प्लॉट क्षेत्रफळ चौ.मी.) × 10,000.
+    ओलावा दुरुस्ती वापरल्यास वजन आधी समायोजित केले जाते, मग वरील सूत्र लागू होते.
+  </div>
+
+  <div class="card" id="installCard" style="display:none; text-align:center;">
+    <div class="card-title" style="justify-content:center;">अॅप इन्स्टॉल करा</div>
+    <div class="note" style="margin-bottom:12px;">हे अॅप तुमच्या मोबाईलवर आयकॉनसह इन्स्टॉल करता येते, जेणेकरून पुढच्या वेळी थेट होम स्क्रीनवरून उघडता येईल.</div>
+    <button id="installBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:.95rem; font-weight:700; cursor:pointer;">📲 अॅप इन्स्टॉल करा</button>
+    <div id="iosNote" class="note" style="display:none; text-align:left; margin-top:10px;">
+      iPhone/iPad वर इन्स्टॉल करण्यासाठी: खालील शेअर बटण <b>⬆️</b> दाबा → <b>"Add to Home Screen"</b> निवडा → <b>"Add"</b> दाबा.
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <b>टीप:</b> पीक उत्पादनाचे हे कॅल्क्युलेटर केवळ कर्मचाऱ्यांच्या सहाय्याकरिता एक डिजिटल टूल म्हणून तयार करण्यात आले आहे.
+  </div>
+</div>
+
+<script>
+let mode = 'w2y';
+let areaMode = 'direct';
+
+// पीक कापणी प्रयोगासाठी अधिकृत प्लॉट मोजमापे (मीटर मध्ये लांबी x रुंदी) - दिलेल्या तक्त्यानुसार कन्फर्म केलेला डेटा
+const CROPS = [
+  { name: "खरीप ज्वारी", l: 10, w: 10 },
+  { name: "भुईमूग (खरीप)", l: 10, w: 10 },
+  { name: "तीळ", l: 10, w: 10 },
+  { name: "मका", l: 10, w: 10 },
+  { name: "भात", l: 10, w: 10 },
+  { name: "रब्बी ज्वारी", l: 10, w: 10 },
+  { name: "गहू", l: 10, w: 10 },
+  { name: "हरभरा", l: 10, w: 10 },
+  { name: "करडई", l: 10, w: 10 },
+  { name: "उन्हाळी सूर्यफूल", l: 10, w: 10 },
+  { name: "उन्हाळी भुईमूग", l: 10, w: 10 },
+  { name: "कापूस", l: 20, w: 10 },
+  { name: "तूर", l: 20, w: 10 },
+  { name: "मूग", l: 10, w: 5 },
+  { name: "उडीद", l: 10, w: 5 },
+  { name: "सोयाबीन", l: 10, w: 5 },
+  { name: "ऊस", l: 5, w: 5 },
+  { name: "इतर / कस्टम", l: null, w: null },
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
-});
+function populateCropDropdown(){
+  const sel = document.getElementById('cropSelect');
+  sel.innerHTML = '';
+  CROPS.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+}
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
+function onCropChange(){
+  const idx = parseInt(document.getElementById('cropSelect').value);
+  const crop = CROPS[idx];
+  const customBox = document.getElementById('customCropBox');
+  const note = document.getElementById('cropSizeNote');
+  const lenEl = document.getElementById('lenM');
+  const widEl = document.getElementById('widM');
+  const areaEl = document.getElementById('areaSqm');
+  const btnDirect = document.getElementById('areaDirect');
+  const btnLW = document.getElementById('areaLW');
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((res) => {
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res.clone()));
-          return res;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
-  );
-});
+  if(crop.l === null){
+    customBox.style.display = 'block';
+    note.textContent = 'कृपया या पिकासाठी योग्य प्लॉट क्षेत्रफळ खाली स्वतः टाका.';
+    lenEl.readOnly = false; widEl.readOnly = false; areaEl.readOnly = false;
+    btnDirect.disabled = false; btnLW.disabled = false;
+    // मापे कोरी ठेवा - आधीच्या पिकाची भरलेली मापे पुसून टाका
+    lenEl.value = ''; widEl.value = ''; areaEl.value = '';
+    document.getElementById('resultCard').style.display = 'none';
+    return;
+  }
+  customBox.style.display = 'none';
+
+  // standard crop: lock the plot size, no accidental edits allowed
+  setAreaMode('lw');
+  lenEl.value = crop.l;
+  widEl.value = crop.w;
+  lenEl.readOnly = true; widEl.readOnly = true;
+  areaEl.readOnly = true;
+  btnDirect.disabled = true; btnLW.disabled = true;
+  note.textContent = `अधिकृत प्लॉट साइझ (निश्चित): ${crop.l} मी × ${crop.w} मी (${crop.l*crop.w} चौ.मी.)`;
+  calc();
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById('modeW2Y').classList.toggle('active', m==='w2y');
+  document.getElementById('modeY2W').classList.toggle('active', m==='y2w');
+  document.getElementById('inputW').style.display = (m==='w2y') ? 'block' : 'none';
+  document.getElementById('inputY').style.display = (m==='y2w') ? 'block' : 'none';
+  calc();
+}
+function setAreaMode(m){
+  areaMode = m;
+  document.getElementById('areaDirect').classList.toggle('active', m==='direct');
+  document.getElementById('areaLW').classList.toggle('active', m==='lw');
+  document.getElementById('areaDirectBox').style.display = (m==='direct') ? 'block' : 'none';
+  document.getElementById('areaLWBox').style.display = (m==='lw') ? 'block' : 'none';
+  calc();
+}
+function getArea(){
+  if(areaMode==='direct'){
+    return parseFloat(document.getElementById('areaSqm').value);
+  } else {
+    const l = parseFloat(document.getElementById('lenM').value);
+    const w = parseFloat(document.getElementById('widM').value);
+    return (isFinite(l) && isFinite(w)) ? l*w : NaN;
+  }
+}
+function toKgPerHa(val, unit){
+  if(unit==='kg') return val;
+  if(unit==='q') return val*100;
+  if(unit==='t') return val*1000;
+  return val;
+}
+function moistureAdjust(weight){
+  const cur = parseFloat(document.getElementById('curMoist').value);
+  const std = parseFloat(document.getElementById('stdMoist').value);
+  if(isFinite(cur) && isFinite(std) && std < 100){
+    return weight * (100-cur) / (100-std);
+  }
+  return weight;
+}
+function fmt(n, d=2){
+  if(!isFinite(n)) return '—';
+  return n.toLocaleString('en-IN', {maximumFractionDigits:d, minimumFractionDigits:0});
+}
+function calc(){
+  const errBox = document.getElementById('errBox');
+  const resultCard = document.getElementById('resultCard');
+  errBox.style.display='none';
+  const area = getArea();
+
+  if(!isFinite(area) || area<=0){
+    resultCard.style.display='none';
+    return;
+  }
+
+  if(mode==='w2y'){
+    let w = parseFloat(document.getElementById('plotWeight').value);
+    if(!isFinite(w) || w<0){ resultCard.style.display='none'; return; }
+    w = moistureAdjust(w);
+    const kgHa = (w/area)*10000;
+    document.getElementById('resBig').textContent = fmt(kgHa,1) + ' किलो/हेक्टर';
+    document.getElementById('resLines').innerHTML =
+      (kgHa/100).toLocaleString('en-IN',{maximumFractionDigits:2}) + ' क्विंटल/हेक्टर &nbsp;|&nbsp; ' +
+      (kgHa/1000).toLocaleString('en-IN',{maximumFractionDigits:3}) + ' टन/हेक्टर';
+    resultCard.style.display='block';
+  } else {
+    let y = parseFloat(document.getElementById('yieldVal').value);
+    const unit = document.getElementById('yieldUnit').value;
+    if(!isFinite(y) || y<0){ resultCard.style.display='none'; return; }
+    const kgHa = toKgPerHa(y, unit);
+    const plotW = (kgHa*area)/10000;
+    document.getElementById('resBig').textContent = fmt(plotW,3) + ' किलो (प्लॉट वजन)';
+    document.getElementById('resLines').innerHTML =
+      'प्लॉट क्षेत्रफळ: ' + fmt(area,2) + ' चौ.मी. साठी अपेक्षित वजन';
+    resultCard.style.display='block';
+  }
+}
+
+['areaSqm','lenM','widM','plotWeight','yieldVal','yieldUnit','curMoist','stdMoist']
+  .forEach(id => document.getElementById(id).addEventListener('input', calc));
+
+populateCropDropdown();
+onCropChange();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed', err));
+  });
+}
+
+// ---- PWA इन्स्टॉल हाताळणी ----
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true; // iOS साठी जुनी पद्धत
+
+let deferredPrompt = null;
+const installCard = document.getElementById('installCard');
+const installBtn = document.getElementById('installBtn');
+const iosNote = document.getElementById('iosNote');
+
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+if (!isStandalone) {
+  if (isIOS) {
+    // iOS वर beforeinstallprompt मिळत नाही, त्यामुळे सूचना दाखवा
+    installCard.style.display = 'block';
+    iosNote.style.display = 'block';
+  } else {
+    // Android/Chrome/Edge इत्यादी - इव्हेंट पकडून बटणावर क्लिक झाल्यावर पॉप अप दाखवा
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installCard.style.display = 'block';
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        installCard.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installCard.style.display = 'none';
+    });
+  }
+}
+</script>
+</body>
+</html>
