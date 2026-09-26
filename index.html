@@ -54,10 +54,6 @@ body{
   box-shadow:var(--shadow);
 }
 .header-top{display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;}
-.header-icon{
-  width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.16);
-  display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex:none;
-}
 h1{font-size:1.15rem; margin:0; font-weight:700; letter-spacing:.1px; line-height:1.35;}
 .sub{color:rgba(255,255,255,.85); font-size:.85rem; margin-top:3px;}
 .credit{
@@ -116,13 +112,61 @@ details[open] summary::before{content:"▾ ";}
   border-top:1px solid var(--border); padding-top:14px; text-align:center;
 }
 .disclaimer b{color:var(--accent-dark);}
+
+/* इन्स्टॉल ओव्हरले - मोठे व मध्यभागी */
+.install-overlay{
+  position:fixed; inset:0; background:rgba(10,15,8,.6);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; z-index:1000;
+}
+.install-modal{
+  background:var(--card); border-radius:20px; padding:30px 24px 26px;
+  max-width:380px; width:100%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.3);
+}
+.install-modal-icon{
+  width:72px; height:72px; border-radius:18px; margin:0 auto 16px;
+  background:linear-gradient(135deg, var(--accent-dark), var(--accent));
+  display:flex; align-items:center; justify-content:center; font-size:2.2rem;
+  box-shadow:var(--shadow);
+}
+.install-modal h2{font-size:1.15rem; margin:0 0 8px; color:var(--text); font-weight:800;}
+.install-modal p{font-size:.9rem; color:var(--muted); margin:0 0 20px; line-height:1.5;}
+.install-modal button.primary{
+  width:100%; padding:15px; border:none; border-radius:12px; background:var(--accent);
+  color:#fff; font-size:1.02rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow);
+}
+.install-modal button.skip{
+  width:100%; padding:12px; border:none; background:transparent; color:var(--muted);
+  font-size:.85rem; margin-top:6px; cursor:pointer; text-decoration:underline;
+}
+.install-modal .ios-steps{
+  text-align:left; font-size:.86rem; color:var(--text); background:var(--accent-light);
+  border-radius:12px; padding:14px; line-height:1.7; margin-bottom:16px;
+}
 </style>
 </head>
 <body>
+
+<div class="install-overlay" id="installOverlay" style="display:none;">
+  <div class="install-modal">
+    <div class="install-modal-icon">📲</div>
+    <h2>अॅप इन्स्टॉल करा</h2>
+    <p>हे अॅप तुमच्या मोबाईलवर आयकॉनसह इन्स्टॉल करा, जेणेकरून पुढच्या वेळी थेट होम स्क्रीनवरून उघडता येईल.</p>
+
+    <div id="iosSteps" class="ios-steps" style="display:none;">
+      १. खालील शेअर बटण <b>⬆️</b> दाबा<br>
+      २. <b>"Add to Home Screen"</b> निवडा<br>
+      ३. वरती <b>"Add"</b> दाबा
+    </div>
+
+    <button class="primary" id="installBtn" style="display:none;">📲 आत्ता इन्स्टॉल करा</button>
+    <button class="skip" id="installSkip">आत्ता नको, नंतर पाहतो</button>
+  </div>
+</div>
+
 <div class="header">
   <div class="wrap" style="padding:0;">
     <div class="header-top">
-      <div class="header-icon">🌾</div>
       <div>
         <h1>पीक कापणी प्रयोग — उत्पादकता कॅल्क्युलेटर</h1>
         <div class="sub">प्लॉट वजन ⇄ हेक्टरी उत्पादन असे दोन्ही दिशेने गणित</div>
@@ -381,6 +425,53 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed', err));
   });
+}
+
+// ---- PWA इन्स्टॉल हाताळणी (मोठा, मध्यभागी ओव्हरले) ----
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true; // iOS साठी जुनी पद्धत
+
+let deferredPrompt = null;
+const overlay = document.getElementById('installOverlay');
+const installBtn = document.getElementById('installBtn');
+const installSkip = document.getElementById('installSkip');
+const iosSteps = document.getElementById('iosSteps');
+
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const SKIP_KEY = 'pkCalcInstallSkipped';
+
+function closeOverlay(){
+  overlay.style.display = 'none';
+}
+installSkip.addEventListener('click', () => {
+  try { sessionStorage.setItem(SKIP_KEY, '1'); } catch(e){}
+  closeOverlay();
+});
+
+if (!isStandalone && !sessionStorage.getItem(SKIP_KEY)) {
+  if (isIOS) {
+    // iOS वर beforeinstallprompt मिळत नाही, त्यामुळे लगेच सूचना दाखवा
+    iosSteps.style.display = 'block';
+    overlay.style.display = 'flex';
+  } else {
+    // Android/Chrome/Edge इत्यादी - इव्हेंट पकडून लगेच मोठा पॉप अप दाखवा
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+      overlay.style.display = 'flex';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      closeOverlay();
+    });
+
+    window.addEventListener('appinstalled', closeOverlay);
+  }
 }
 </script>
 </body>
