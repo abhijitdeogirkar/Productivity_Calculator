@@ -220,7 +220,7 @@ details[open] summary::before{content:"▾ ";}
   <div class="card" id="installCard" style="display:none; text-align:center;">
     <div class="card-title" style="justify-content:center;">ऍप इन्स्टॉल करा</div>
     <div class="note" style="margin-bottom:12px;">हे ऍप तुमच्या मोबाईलवर आयकॉनसह इन्स्टॉल करता येते, जेणेकरून पुढच्या वेळी थेट होम स्क्रीनवरून उघडता येईल.</div>
-    <button id="installBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:.95rem; font-weight:700; cursor:pointer;">📲 अॅप इन्स्टॉल करा</button>
+    <button id="installBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:.95rem; font-weight:700; cursor:pointer;">📲 ऍप इन्स्टॉल करा</button>
     <div id="iosNote" class="note" style="display:none; text-align:left; margin-top:10px;">
       iPhone/iPad वर इन्स्टॉल करण्यासाठी: खालील शेअर बटण <b>⬆️</b> दाबा → <b>"Add to Home Screen"</b> निवडा → <b>"Add"</b> दाबा.
     </div>
