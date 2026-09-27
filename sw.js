@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="पीक कॅल्क्युलेटर">
+<meta name="apple-mobile-web-app-title" content="उत्पादकता कॅल्क्युलेटर">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
@@ -218,8 +218,8 @@ details[open] summary::before{content:"▾ ";}
   </div>
 
   <div class="card" id="installCard" style="display:none; text-align:center;">
-    <div class="card-title" style="justify-content:center;">अॅप इन्स्टॉल करा</div>
-    <div class="note" style="margin-bottom:12px;">हे अॅप तुमच्या मोबाईलवर आयकॉनसह इन्स्टॉल करता येते, जेणेकरून पुढच्या वेळी थेट होम स्क्रीनवरून उघडता येईल.</div>
+    <div class="card-title" style="justify-content:center;">ऍप इन्स्टॉल करा</div>
+    <div class="note" style="margin-bottom:12px;">हे ऍप तुमच्या मोबाईलवर आयकॉनसह इन्स्टॉल करता येते, जेणेकरून पुढच्या वेळी थेट होम स्क्रीनवरून उघडता येईल.</div>
     <button id="installBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:.95rem; font-weight:700; cursor:pointer;">📲 अॅप इन्स्टॉल करा</button>
     <div id="iosNote" class="note" style="display:none; text-align:left; margin-top:10px;">
       iPhone/iPad वर इन्स्टॉल करण्यासाठी: खालील शेअर बटण <b>⬆️</b> दाबा → <b>"Add to Home Screen"</b> निवडा → <b>"Add"</b> दाबा.
