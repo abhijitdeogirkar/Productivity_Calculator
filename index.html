@@ -182,6 +182,11 @@ details[open] summary::before{content:"▾ ";}
     <div class="credit">विकसक: अभिजीत वि. देवगिरकर, कृषी विकास अधिकारी, वाशिम</div>
   </div>
 </div>
+
+<div id="installCountBadge" style="text-align:center; margin:2px 0 16px; font-size:.8rem; color:var(--muted);">
+  📲 आत्तापर्यंत <b id="installCountNum" style="color:var(--accent-dark);">…</b> जणांनी हे अॅप इन्स्टॉल केले आहे
+</div>
+
 <div class="wrap">
 
   <div class="card">
@@ -260,9 +265,6 @@ details[open] summary::before{content:"▾ ";}
     <b>टीप:</b> पीक उत्पादनाचे हे कॅल्क्युलेटर केवळ कर्मचाऱ्यांच्या सहाय्याकरिता एक डिजिटल टूल म्हणून तयार करण्यात आले आहे.
   </div>
 
-  <div id="installCountBadge" style="display:none; text-align:center; margin-top:14px; font-size:.8rem; color:var(--muted);">
-    📲 आत्तापर्यंत <b id="installCountNum" style="color:var(--accent-dark);">—</b> जणांनी हे अॅप इन्स्टॉल केले आहे
-  </div>
 </div>
 
 <script>
@@ -482,16 +484,31 @@ function logInstall(){
   } catch(e){}
 }
 
+const INSTALL_COUNT_CACHE_KEY = 'pkCalcInstallCountCache';
+
 function loadInstallCount(){
+  // आधी कॅशेमधील (मागच्या वेळचा) आकडा लगेच दाखवा, नेटवर्कची वाट न बघता
+  let cached = null;
+  try { cached = localStorage.getItem(INSTALL_COUNT_CACHE_KEY); } catch(e){}
+  if (cached !== null) {
+    document.getElementById('installCountNum').textContent = cached;
+  } else {
+    document.getElementById('installCountBadge').style.display = 'none';
+  }
+
+  // मग बॅकग्राउंडमध्ये ताजा आकडा आणून अपडेट करा व कॅशेमध्ये साठवा
   fetch(`${COUNT_API}?action=count`)
     .then(res => res.json())
     .then(data => {
       if (typeof data.total === 'number') {
         document.getElementById('installCountNum').textContent = data.total;
         document.getElementById('installCountBadge').style.display = 'block';
+        try { localStorage.setItem(INSTALL_COUNT_CACHE_KEY, data.total); } catch(e){}
       }
     })
-    .catch(() => {});
+    .catch(() => {
+      // नेटवर्क अयशस्वी झाले तरी आधीच दाखवलेला कॅश्ड आकडा तसाच राहू द्या
+    });
 }
 loadInstallCount();
 </script>
