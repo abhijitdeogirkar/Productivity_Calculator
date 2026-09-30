@@ -185,7 +185,6 @@ details[open] summary::before{content:"▾ ";}
 <div class="wrap">
 
   <div class="card">
-    <div class="card-title">माहिती भरा</div>
     <div class="toggle">
       <button id="modeW2Y" class="active" onclick="setMode('w2y')">वजन → हेक्टरी उत्पादन</button>
       <button id="modeY2W" onclick="setMode('y2w')">हेक्टरी उत्पादन → वजन</button>
@@ -197,19 +196,7 @@ details[open] summary::before{content:"▾ ";}
       <label>पिकाचे नाव लिहा</label>
       <input id="customCrop" type="text" placeholder="उदा. करडई, तीळ">
     </div>
-    <div class="note" id="cropSizeNote" style="margin-top:8px;"></div>
-
-    <label>प्लॉट क्षेत्रफळ कसे टाकायचे?</label>
-    <div class="toggle">
-      <button id="areaDirect" class="active" onclick="setAreaMode('direct')">थेट चौ.मी.</button>
-      <button id="areaLW" onclick="setAreaMode('lw')">लांबी × रुंदी</button>
-    </div>
-
-    <div id="areaDirectBox">
-      <label>प्लॉट क्षेत्रफळ (चौरस मीटर)</label>
-      <input id="areaSqm" type="number" min="0" step="any" placeholder="उदा. 25">
-    </div>
-    <div id="areaLWBox" style="display:none">
+    <div id="areaLWBox">
       <div class="row">
         <div>
           <label>लांबी (मीटर)</label>
@@ -221,6 +208,7 @@ details[open] summary::before{content:"▾ ";}
         </div>
       </div>
     </div>
+    <input type="hidden" id="areaSqm" value="">
 
     <div id="inputW">
       <label>प्लॉट मधील धान्य वजन (किलो)</label>
@@ -273,13 +261,12 @@ details[open] summary::before{content:"▾ ";}
   </div>
 
   <div id="installCountBadge" style="display:none; text-align:center; margin-top:14px; font-size:.8rem; color:var(--muted);">
-    📲 आत्तापर्यंत <b id="installCountNum" style="color:var(--accent-dark);">—</b> जणांनी हे ऍप इन्स्टॉल केले आहे
+    📲 आत्तापर्यंत <b id="installCountNum" style="color:var(--accent-dark);">—</b> जणांनी हे अॅप इन्स्टॉल केले आहे
   </div>
 </div>
 
 <script>
 let mode = 'w2y';
-let areaMode = 'direct';
 
 // पीक कापणी प्रयोगासाठी अधिकृत प्लॉट मोजमापे (मीटर मध्ये लांबी x रुंदी) - दिलेल्या तक्त्यानुसार कन्फर्म केलेला डेटा
 const CROPS = [
@@ -318,31 +305,21 @@ function onCropChange(){
   const idx = parseInt(document.getElementById('cropSelect').value);
   const crop = CROPS[idx];
   const customBox = document.getElementById('customCropBox');
-  const note = document.getElementById('cropSizeNote');
   const lenEl = document.getElementById('lenM');
   const widEl = document.getElementById('widM');
-  const areaEl = document.getElementById('areaSqm');
-  const btnDirect = document.getElementById('areaDirect');
-  const btnLW = document.getElementById('areaLW');
 
   if(crop.l === null){
     customBox.style.display = 'block';
-    note.textContent = 'कृपया या पिकासाठी योग्य प्लॉट क्षेत्रफळ खाली स्वतः टाका.';
-    lenEl.readOnly = false; widEl.readOnly = false; areaEl.readOnly = false;
-    btnDirect.disabled = false; btnLW.disabled = false;
-    lenEl.value = ''; widEl.value = ''; areaEl.value = '';
+    lenEl.readOnly = false; widEl.readOnly = false;
+    lenEl.value = ''; widEl.value = '';
     document.getElementById('resultCard').style.display = 'none';
     return;
   }
   customBox.style.display = 'none';
 
-  setAreaMode('lw');
   lenEl.value = crop.l;
   widEl.value = crop.w;
   lenEl.readOnly = true; widEl.readOnly = true;
-  areaEl.readOnly = true;
-  btnDirect.disabled = true; btnLW.disabled = true;
-  note.textContent = `अधिकृत प्लॉट साइझ (निश्चित): ${crop.l} मी × ${crop.w} मी (${crop.l*crop.w} चौ.मी.)`;
   calc();
 }
 
@@ -354,22 +331,10 @@ function setMode(m){
   document.getElementById('inputY').style.display = (m==='y2w') ? 'block' : 'none';
   calc();
 }
-function setAreaMode(m){
-  areaMode = m;
-  document.getElementById('areaDirect').classList.toggle('active', m==='direct');
-  document.getElementById('areaLW').classList.toggle('active', m==='lw');
-  document.getElementById('areaDirectBox').style.display = (m==='direct') ? 'block' : 'none';
-  document.getElementById('areaLWBox').style.display = (m==='lw') ? 'block' : 'none';
-  calc();
-}
 function getArea(){
-  if(areaMode==='direct'){
-    return parseFloat(document.getElementById('areaSqm').value);
-  } else {
-    const l = parseFloat(document.getElementById('lenM').value);
-    const w = parseFloat(document.getElementById('widM').value);
-    return (isFinite(l) && isFinite(w)) ? l*w : NaN;
-  }
+  const l = parseFloat(document.getElementById('lenM').value);
+  const w = parseFloat(document.getElementById('widM').value);
+  return (isFinite(l) && isFinite(w)) ? l*w : NaN;
 }
 function toKgPerHa(val, unit){
   if(unit==='kg') return val;
@@ -423,7 +388,7 @@ function calc(){
   }
 }
 
-['areaSqm','lenM','widM','plotWeight','yieldVal','yieldUnit','curMoist','stdMoist']
+['lenM','widM','plotWeight','yieldVal','yieldUnit','curMoist','stdMoist']
   .forEach(id => document.getElementById(id).addEventListener('input', calc));
 
 populateCropDropdown();
